@@ -1,0 +1,27 @@
+.body{
+  color:#827979;
+}
+
+.tab{
+  color:white !important;
+  background: #FF8F00 !important ;
+  font-family: inherit !important;
+  text-transform: none !important;
+  font-size: 16px !important;
+}  
+.p{
+  border-bottom: 1px solid lightgrey;
+  margin: 0 0 20px 0;
+  padding: 30px 40px 28px 30px;
+  font-family: Roboto, sans-serif;
+} 
+
+.headline{
+  margin: 0;
+  
+  padding: 30px 40px 28px 30px;
+  font-family: Roboto, sans-serif;
+}
+.itemsContainer{
+  margin: 0 auto;
+}

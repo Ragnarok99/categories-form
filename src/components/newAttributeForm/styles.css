@@ -1,0 +1,11 @@
+.btnAddAttribute{
+  margin-top: 30px !important;
+}
+
+.rowButtonAddAttribute{
+  padding: 0 !important;
+}
+.btnAddAttribute button {
+  text-align: left !important;
+  
+}
