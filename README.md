@@ -2,7 +2,7 @@
 
 ### Getting Started
 
-There are two methods for getting started with this repo.
+For getting started with this repo.
 
 ```
 > git clone https://github.com/Ragnarok99/categories-form
