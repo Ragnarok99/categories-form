@@ -1,9 +1,10 @@
 import React from "react";
-import Enum from '../enum/';
-import renderTextField from '../renderTextField/';
-import {Field} from 'redux-form';
+import Enum from "../enum/";
+import renderTextField from "../renderTextField/";
+import { Field } from "redux-form";
+import PropTypes from "prop-types";
 
-const RenderMember = (props) => {
+const RenderMember = props => {
   let member = "members";
   let { format, data_type, valueEnum, valuesChips, handleDeleteChip } = props;
 
@@ -77,7 +78,15 @@ const RenderMember = (props) => {
           </div>
         );
       }
+    default:
+      return <div />;
   }
 };
-
+RenderMember.propTypes = {
+  format: PropTypes.string,
+  data_type: PropTypes.string,
+  valueEnum: PropTypes.string,
+  valuesChips: PropTypes.array,
+  handleDeleteChip: PropTypes.func
+};
 export default RenderMember;

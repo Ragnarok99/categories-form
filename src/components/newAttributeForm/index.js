@@ -1,23 +1,23 @@
 import React, { Component } from "react";
-import { Field, reduxForm } from "redux-form";
+import PropTypes from "prop-types";
+import { Field, reduxForm, getFormValues } from "redux-form";
 import { connect } from "react-redux";
 import Snackbar from "material-ui/Snackbar";
 import Chip from "material-ui/Chip";
 import RaisedButton from "material-ui/RaisedButton";
-import styles from "./styles.css";
+import Add from "material-ui/svg-icons/content/add-circle";
 import _ from "lodash";
 import SelectField from "material-ui/SelectField";
 import MenuItem from "material-ui/MenuItem";
-import uuid from 'uuid';
-import {
-  Values
-} from 'redux-form-website-template'
-
-import Add from 'material-ui/svg-icons/content/add-circle';
-import renderTextField from '../renderTextField/';
+import uuid from "uuid";
+import { Values } from "redux-form-website-template";
+import validate from "../../utils/validate";
+import categories from "../../constants/categories";
+import renderTextField from "../renderTextField/";
 import { saveAttribute } from "../../actions";
-import RenderMember from '../../components/renderMembers/';
- 
+import RenderMember from "../../components/renderMembers/";
+import styles from "./styles.css";
+
 class NewAttributeForm extends Component {
   constructor(props) {
     super(props);
@@ -32,6 +32,7 @@ class NewAttributeForm extends Component {
     this.handleAddChip = this.handleAddChip.bind(this);
     this.handleInputEnum = this.handleInputEnum.bind(this);
     this.handleDeleteChip = this.handleDeleteChip.bind(this);
+    this.handleSelectedChanged = this.handleSelectedChanged.bind(this);
   }
 
   renderSelectField(field) {
@@ -40,30 +41,50 @@ class NewAttributeForm extends Component {
         floatingLabelText={field.label}
         floatingLabelFixed={true}
         {...field}
+        fullWidth={true}
         value={field.input.value}
-        onChange={(eve, index, val) => {
-          let { name } = field.input;
-          if (
-            (name === "format" && val === "NONE") ||
-            (name === "data_type" && val === "OBJECT")) {
-            this.props.change("members", null); //clean up data
-          }
-          this.setState({
-            [name]: val //tracking the values selected
-          });
-          field.input.onChange(val);
-        }}
+        onChange={(eve, index, val) =>
+          this.handleSelectedChanged(eve, index, val, field)}
       />
     );
   }
 
+  handleSelectedChanged(eve, index, val, field) {
+    this.props.change("members", {}); //clean up data
+
+    let { name } = field.input;
+    if (name === "data_type" && val === "OBJECT") {
+      this.props.change("default_value", null); //clean up data
+      this.props.change("format", "NONE"); //clean up data
+    }
+    if (
+      this.state.data_type === "STRING" &&
+      this.state.format !== "NONE" &&
+      name === "format" &&
+      val === "NONE"
+    ) {
+      this.setState({
+        valuesChips: []
+      });
+    }
+    this.setState({
+      [name]: val //tracking the values selected
+    });
+    field.input.onChange(val);
+  }
+
   render() {
-    const { handleSubmit, pristine, reset, submitting, invalid } = this.props;
-    let { data_type } = this.state;
+    const {
+      handleSubmit,
+      pristine,
+      reset,
+      submitting,
+      invalid,
+      propertiesForms
+    } = this.props;
+    let { data_type, format, valueEnum, valuesChips } = this.state;
     return (
       <div className="container">
-      <Values form="AttributeForm" />
-
         {/* message for missing value in enum field */}
         <Snackbar
           open={this.state.open}
@@ -75,21 +96,17 @@ class NewAttributeForm extends Component {
         />
         <form onSubmit={handleSubmit(this.onSubmit.bind(this))}>
           <div className="row">
-            <div className="col-sm-4">
-              <Field
-                name="name"
-                label="Name"
-                component={renderTextField}
-              />
+            <div className="col-sm-12 col-md-4">
+              <Field name="name" label="Name" component={renderTextField} />
             </div>
-            <div className="col-sm-4">
+            <div className="col-sm-12 col-md-4">
               <Field
                 name="description"
-                label="Descrption"
+                label="Description"
                 component={renderTextField}
               />
             </div>
-            <div className="col-sm-4">
+            <div className="col-sm-12 col-md-4">
               <Field
                 disabled={true}
                 name="device_resource_type"
@@ -106,7 +123,7 @@ class NewAttributeForm extends Component {
             </div>
           </div>
           <div className="row">
-            <div className="col-sm-4">
+            <div className="col-sm-12 col-md-4">
               <Field
                 disabled={data_type === "OBJECT"}
                 name="default_value"
@@ -114,7 +131,7 @@ class NewAttributeForm extends Component {
                 component={renderTextField}
               />
             </div>
-            <div className="col-sm-4">
+            <div className="col-sm-12 col-md-4">
               <Field
                 name="data_type"
                 component={this.renderSelectField.bind(this)}
@@ -124,7 +141,7 @@ class NewAttributeForm extends Component {
                 <MenuItem primaryText={"OBJECT"} value={"OBJECT"} />
               </Field>
             </div>
-            <div className="col-sm-4">
+            <div className="col-sm-12 col-md-4">
               <Field
                 disabled={data_type === "OBJECT"}
                 name="format"
@@ -143,9 +160,12 @@ class NewAttributeForm extends Component {
 
           {/* fields options */}
 
-          <RenderMember 
-            {...this.state} 
-            handleAddChip={this.handleAddChip} 
+          <RenderMember
+            format={format}
+            valueEnum={valueEnum}
+            data_type={data_type}
+            valuesChips={valuesChips}
+            handleAddChip={this.handleAddChip}
             handleInputEnum={this.handleInputEnum}
             handleDeleteChip={this.handleDeleteChip}
           />
@@ -156,42 +176,54 @@ class NewAttributeForm extends Component {
             <div className={`col-md-12 ${styles.rowButtonAddAttribute}`}>
               <RaisedButton
                 className={styles.btnAddAttribute}
-                disabled={submitting || invalid}
+                disabled={invalid}
                 icon={<Add />}
                 primary={true}
                 label="Add attribute"
                 type="submit"
-                fullWidth={true} 
+                fullWidth={true}
               />
             </div>
           </div>
-
-          {/* <RaisedButton onClick={reset} label="reset" type="button" /> */}
         </form>
       </div>
     );
   }
 
-  handleInputEnum(value){
+  handleInputEnum(value) {
     this.setState({
       valueEnum: value
-    })
+    });
   }
 
-  handleDeleteChip(idChip){
-    this.setState({
-      valuesChips: this.state.valuesChips.filter(chip => chip.id !== idChip)
-    })
+  handleDeleteChip(idChip) {
+    this.setState(
+      {
+        valuesChips: this.state.valuesChips.filter(chip => chip.id !== idChip)
+      },
+      () => {
+        this.props.change("members", { enumerations: this.state.valuesChips });
+      }
+    );
   }
 
   handleAddChip() {
     let { valueEnum } = this.state;
-    console.log(valueEnum);
     if (valueEnum && valueEnum.trim() !== "") {
-      this.setState({
-        valuesChips: this.state.valuesChips.concat({id:uuid.v4(),value:valueEnum}),
-        valueEnum: ""
-      });
+      this.setState(
+        {
+          valuesChips: this.state.valuesChips.concat({
+            id: uuid.v4(),
+            value: valueEnum
+          }),
+          valueEnum: ""
+        },
+        () => {
+          this.props.change("members", {
+            enumerations: this.state.valuesChips
+          });
+        }
+      );
     } else {
       this.setState({
         open: true
@@ -202,70 +234,22 @@ class NewAttributeForm extends Component {
   }
 
   onSubmit(values) {
-    values["category"] = this.props.currentCategory;
-    console.log(values);
     this.props.saveAttribute(values);
     this.props.reset();
+    this.setState({
+      valuesChips: [],
+      data_type: "STRING",
+      format: "NONE"
+    });
   }
 }
 
-function validate(values, props) {
-  let { attributes } = props;
-
-  const errors = { members: {} };
-  if (!values.name) {
-    errors.name = "Enter a name";
-  }
-  if (attributes.find(el => el.name === values.name)) {
-    errors.name = `Another attribute already owns the name ${values.name}, please provide a different one.`;
-  }
-  if (values.members) {
-    if (
-      parseFloat(values.members.max_range) <
-      parseFloat(values.members.min_range)
-    ) {
-      errors.members["max_range"] = "Max range must be greater than min range";
-    }
-
-    if (
-      parseFloat(values.members.min_range) >
-      parseFloat(values.members.max_range)
-    ) {
-      errors.members["min_range"] = "Min range must be lower than max range";
-    }
-    if (
-      !_.inRange(
-        parseFloat(values.members.precision),
-        parseFloat(values.members.min_range),
-        parseFloat(values.members.max_range)
-      )
-    ) {
-      errors.members[
-        "precision"
-      ] = `Precision must be in a range between ${values.members
-        .min_range} and ${values.members.max_range}`;
-    }
-    if (
-      !_.inRange(
-        parseFloat(values.members.accuracy),
-        parseFloat(values.members.min_range),
-        parseFloat(values.members.max_range)
-      )
-    ) {
-      errors.members["accuracy"] = `Accuracy must be in a range between ${values
-        .members.min_range} and ${values.members.max_range}`;
-    }
-  }
-
-  return errors;
-}
+NewAttributeForm.propTypes = {
+  form: PropTypes.string,
+  initialValues: PropTypes.object,
+  attributes: PropTypes.array
+};
 
 export default reduxForm({
-  validate,
-  form: "AttributeForm",
-  initialValues: {
-    format: "NONE",
-    data_type: "STRING",
-    device_resource_type: "Default value"
-  }
+  validate
 })(connect(null, { saveAttribute })(NewAttributeForm));
